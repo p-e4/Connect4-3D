@@ -16,14 +16,14 @@ class Board:
 
     def check_winner(self,board: np.ndarray, player) -> bool:
         for i in range(5):
-            if all(board[i][j] == player for j in range(5)):
+            if all(board[i][j] == player for j in range(3)):
                 return True
-            if all(board[j][i] == player for j in range(5)):
+            if all(board[j][i] == player for j in range(3)):
                 return True
 
-            if all(board[i][i] == player for i in range(5)):
+            if all(board[i][i] == player for i in range(3)):
                 return True
-            if all(board[i][4-i] == player for i in range(5)):
+            if all(board[i][4-i] == player for i in range(3)):
                 return True
         return False
 
