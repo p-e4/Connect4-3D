@@ -1,7 +1,7 @@
 from ursina import *
-from game.tmp_prototype_board import GameBoard
+from game.board_3D import GameBoard
 # Import Agent specifically from the engine file
-from game.test_engine import Agent 
+from game.test_engine import dumb_Agent 
 
 app = Ursina()
 Sky(color=color.light_gray)
@@ -9,7 +9,7 @@ game = GameBoard()
 EditorCamera()
 
 # Initialize the agent using the imported class
-my_ai = Agent(name="StrategyAI") 
+my_ai = dumb_Agent(name="First_Available") 
 
 def update():
     # PHASE 2: AI Move
@@ -25,5 +25,6 @@ def update():
         else:
             print("AI has no moves!")
             game.turn_phase = 1
+
 
 app.run()

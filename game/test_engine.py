@@ -1,7 +1,7 @@
 # game/test_engine.py
 import numpy as np
 
-class Agent:
+class dumb_Agent:
     def __init__(self, name):
         self.name = name
 
