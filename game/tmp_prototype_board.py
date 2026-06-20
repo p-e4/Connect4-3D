@@ -11,6 +11,8 @@ class GameBoard:
         self.column_heights = np.zeros((size, size), dtype=int)
         self.turn_white = True
         
+        self.turn_phase = 1
+
         self.tex_light = self._create_solid_texture((180, 140, 100))
         self.tex_dark = self._create_solid_texture((150, 110, 70))
         
@@ -87,27 +89,31 @@ class GameBoard:
 
     def place_block(self, x, z):
         h = self.column_heights[x, z]
+        
         if h < self.max_height:
-            # Update state: Layer (h) -> X -> Z
+            # 1. Update state: Layer (h) -> X -> Z
             self.board_state[h, x, z] = 1 if self.turn_white else 2
             
-            # Visuals
+            # 2. Visuals
             color_to_use = color.white if self.turn_white else color.black
             self._create_bordered_block(x, h, z, color_to_use)
             
+            # 3. Update internal trackers
             self.column_heights[x, z] += 1
             self.turn_white = not self.turn_white
-
-
-            # After successful placement, cycle the turn
+            
+            # 4. Cycle turn phase
             self.turn_phase = 2 if self.turn_phase == 1 else 1
             print(f"Turn phase cycled to: {self.turn_phase}")
-        
-            # Print specifically the requested layer to visualize the structure
+            
+            # 5. Debug output
             print(f"Layer {h} state:\n{self.board_state[h]}")
+            
+            # 6. Return the full board state
             return self.board_state
         else:
             print("Column full!")
+            # IMPORTANT: Returning None explicitly ensures the loop knows the move failed
             return None
 
     def _create_bordered_block(self, x, y, z, color_val):
