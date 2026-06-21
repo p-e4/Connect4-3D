@@ -17,7 +17,7 @@ import numpy as np
 # Here is a list of available methods to talk to:
 # update_from_array -> mirrors array to board
 # place_block -> places a single block on board
-# get_board_state NOTE not added yet currently directly grabs self.board_state
+# get_board_state -> NOTE not added yet currently directly grabs self.board_state
 
 
 # ------------------------ #
@@ -57,7 +57,7 @@ class GameBoard:
         self._build_floor()
 
     # ------------------------ #
-    #          Create          #
+    #          Utils           #
     # ------------------------ #
 
     def _create_solid_texture(self, rgb_tuple):
@@ -103,6 +103,15 @@ class GameBoard:
         ]
         for s_x, s_y, s_z, p_x, p_y, p_z in edge_data:
             Entity(parent=cube, model='cube', color=color.gray, scale=(s_x, s_y, s_z), position=(p_x, p_y, p_z), unlit=True)
+
+
+    def _debug(self):
+        """ Runs debugging based on settings. This should be called once at top of each code """
+        self._trace_back()
+
+    def _trace_back():
+        """ Used to trace back where code is called from """
+        pass
 
 
     # ------------------------ #
@@ -184,32 +193,6 @@ class GameBoard:
         else:
             print("Column full!")
             return None
-
-    # ------------------------ #
-    #          Unused          #
-    # ------------------------ #
-
-    def play_turn(self, x=None, z=None): # NOTE Cant see that this is used anywhere? DISABLED FOR NOW
-        """ Processes a turn. If x/z is None, it pulls from movelist. """ 
-        return
-    
-        if x is None or z is None:
-            if self.movelist:
-                x, z = self.movelist.pop(0)
-                print(f"Auto-playing from movelist: {x}, {z}")
-            else:
-                print("Movelist empty! Switching to manual.")
-                self.is_manual_turn = True
-                return
-
-        # Place the block
-        self.place_block(x, z)
-        self.turn_number += 1
-        # Toggle turn mode for the next turn
-        self.is_manual_turn = not self.is_manual_turn
-
-
-
 
 
 
