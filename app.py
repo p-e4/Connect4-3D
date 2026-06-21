@@ -1,5 +1,5 @@
 from ursina import *
-from game.board_3D import GameBoard
+from game.board import GameBoard
 # Import Agent specifically from the engine file
 from game.test_engine import dumb_Agent 
 
