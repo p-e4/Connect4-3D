@@ -8,6 +8,10 @@
 from ursina import *
 from PIL import Image
 import numpy as np
+from typing import Dict, Union, Any, Tuple
+import numpy.typing as npt
+import inspect
+import os
 
 
 # ------------------------ #
@@ -23,7 +27,7 @@ import numpy as np
 # ------------------------ #
 #         Settings         #
 # ------------------------ #
-trace_back = True # Used for showing where each method is being called from (And every instance of call)
+trace_back = False # Used for showing where each method is being called from (And every instance of call)
 
 
 
@@ -48,10 +52,6 @@ class GameBoard:
         # Texture (For floor)
         self.tex_light = self._create_solid_texture((180, 140, 100))
         self.tex_dark = self._create_solid_texture((150, 110, 70))
-        
-        # Other
-        self.movelist = [(0, 0), (1, 1), (2, 2)] # Pre-defined moves ----- # NOTE Likely not needed
-        self.is_manual_turn = True # Toggle this to False for AI/Auto turns
 
         # Builds board floor (duh)
         self._build_floor()
@@ -105,13 +105,35 @@ class GameBoard:
             Entity(parent=cube, model='cube', color=color.gray, scale=(s_x, s_y, s_z), position=(p_x, p_y, p_z), unlit=True)
 
 
-    def _debug(self):
-        """ Runs debugging based on settings. This should be called once at top of each code """
-        self._trace_back()
+    def _debug(self) -> Tuple[str, str, str]:
+        """ 
+        Runs debugging based on settings. This should be called once at top of each code 
+        
+        :return: funct_name, file_name, file_line of method calling this
+        """
+        funct_name, file_name, file_line = self._trace_back()
 
+
+        return funct_name, file_name, file_line
+
+    @staticmethod
     def _trace_back():
-        """ Used to trace back where code is called from """
-        pass
+        """Runs debugging based on settings. Called from the target code."""
+        # stack()[2] is the caller of the helper (_debug)
+        # stack()[3] is the caller of the caller (one layer higher)
+        caller_of_caller = inspect.stack()[2]
+        target_caller = inspect.stack()[3]
+        
+        funct_name = caller_of_caller.function
+        file_name = os.path.basename(caller_of_caller.filename)
+        file_line = caller_of_caller.lineno
+        
+        caller_funct_name = target_caller.function
+        caller_file_name = os.path.basename(target_caller.filename)
+        caller_file_line = target_caller.lineno
+        
+        if trace_back: print(f"{file_name}/{funct_name}() called by {caller_funct_name}() in {caller_file_name} at line {caller_file_line}")
+        return file_name, funct_name, file_line
 
 
     # ------------------------ #
@@ -128,33 +150,39 @@ class GameBoard:
 
         """
 
-        # 1. Update internal state
-        self.board_state = new_board_state
-        
-        # 2. Clear existing non-base entities (y > -0.5)
-        for e in scene.entities:
-            # We check the model to avoid deleting the floor or sky
-            if e.position.y > -0.4 and e.model == 'cube':
-                destroy(e)
-                
-        # 3. Rebuild based on new state
-        for y in range(new_board_state.shape[0]):
-            for x in range(new_board_state.shape[1]):
-                for z in range(new_board_state.shape[2]):
-                    val = new_board_state[y, x, z]
-                    
-                    if val != 0: # 1 for White, 2 for Black
-                        color_to_use = color.white if val == 1 else color.black
-                        self._create_bordered_block(x, y, z, color_to_use)
-                        
-        # 4. Update column_heights tracker to match the new array
-        for x in range(self.size):
-            for z in range(self.size):
-                # Find the highest index that is not 0
-                occupied = np.where(self.board_state[:, x, z] != 0)[0]
-                self.column_heights[x, z] = occupied[-1] + 1 if len(occupied) > 0 else 0
+        file_name, funct_name, file_line = self._debug()
 
-    def place_block(self, x, z) -> np.array:
+        try:
+            # 1. Update internal state
+            self.board_state = new_board_state
+            
+            # 2. Clear existing non-base entities (y > -0.5)
+            for e in scene.entities:
+                # We check the model to avoid deleting the floor or sky
+                if e.position.y > -0.4 and e.model == 'cube':
+                    destroy(e)
+                    
+            # 3. Rebuild based on new state
+            for y in range(new_board_state.shape[0]):
+                for x in range(new_board_state.shape[1]):
+                    for z in range(new_board_state.shape[2]):
+                        val = new_board_state[y, x, z]
+                        
+                        if val != 0: # 1 for White, 2 for Black
+                            color_to_use = color.white if val == 1 else color.black
+                            self._create_bordered_block(x, y, z, color_to_use)
+                            
+            # 4. Update column_heights tracker to match the new array
+            for x in range(self.size):
+                for z in range(self.size):
+                    # Find the highest index that is not 0
+                    occupied = np.where(self.board_state[:, x, z] != 0)[0]
+                    self.column_heights[x, z] = occupied[-1] + 1 if len(occupied) > 0 else 0
+
+        except Exception as e:
+            print(f"[Error] File:{file_name}, Function:{funct_name}, Line:{file_line}, Error:{e}")
+
+    def place_block(self, x, z) -> Dict[str, Union[bool, npt.NDArray[np.int8]]]:
         """ 
         Places a block based on x and y cordinate <br>
         Will try to place a block ontop of another block if space is occupied. (Up to max of _ hight usually 5) <br>
@@ -163,36 +191,48 @@ class GameBoard:
         :arg x: X cordinate
         :arg y: Y cordinate
 
-        :return: Returns board state as an numpy array (5x5x5), Returns None if fail or if move invalid
+        :return: Returns dict with success and board state as an numpy array (5x5x5), <br> 
+        Returns False on success if fail or if move invalid exmaple: {'success':True, 'data':self.board_state, 'error':''}
 
         """
 
-        h = self.column_heights[x, z]
+        file_name, funct_name, file_line = self._debug()
+
+        try: 
+            h = self.column_heights[x, z]
+            
+            if h < self.max_height:
+                # 1. Update state: Layer (h) -> X -> Z
+                self.board_state[h, x, z] = 1 if self.turn_white else 2
+                
+                # 2. Visuals
+                color_to_use = color.white if self.turn_white else color.black
+                self._create_bordered_block(x, h, z, color_to_use)
+                
+                # 3. Update internal trackers
+                self.column_heights[x, z] += 1
+                self.turn_white = not self.turn_white
+                
+                # 4. Cycle turn phase
+                self.turn_phase = 2 if self.turn_phase == 1 else 1
+                print(f"Turn phase cycled to: {self.turn_phase}")
+                
+                # 5. Debug output
+                print(f"Layer {h} state:\n{self.board_state[h]}")
+                
+                # 6. Return the full board state
+                return {'success':True, 'data':self.board_state, 'error':''}
+            else:
+                print("Column full!")
+                return {'success':False, 'data':self.board_state, 'error':''}
+            
+        except Exception as e:
+            print(f"[Error] File:{file_name}, Function:{funct_name}, Line:{file_line}, Error:{e}")
+            return {'success':False, 'data':self.board_state, 'error':e}
         
-        if h < self.max_height:
-            # 1. Update state: Layer (h) -> X -> Z
-            self.board_state[h, x, z] = 1 if self.turn_white else 2
-            
-            # 2. Visuals
-            color_to_use = color.white if self.turn_white else color.black
-            self._create_bordered_block(x, h, z, color_to_use)
-            
-            # 3. Update internal trackers
-            self.column_heights[x, z] += 1
-            self.turn_white = not self.turn_white
-            
-            # 4. Cycle turn phase
-            self.turn_phase = 2 if self.turn_phase == 1 else 1
-            print(f"Turn phase cycled to: {self.turn_phase}")
-            
-            # 5. Debug output
-            print(f"Layer {h} state:\n{self.board_state[h]}")
-            
-            # 6. Return the full board state
-            return self.board_state
-        else:
-            print("Column full!")
-            return None
+    def get_board_state(self):
+        """ Returns boardstate as 3d np array """
+        return self.board_state
 
 
 
