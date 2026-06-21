@@ -11,6 +11,23 @@ import numpy as np
 
 
 # ------------------------ #
+#          README          #
+# ------------------------ #
+
+# Here is a list of available methods to talk to:
+# update_from_array -> mirrors array to board
+# place_block -> places a single block on board
+# get_board_state NOTE not added yet currently directly grabs self.board_state
+
+
+# ------------------------ #
+#         Settings         #
+# ------------------------ #
+trace_back = True # Used for showing where each method is being called from (And every instance of call)
+
+
+
+# ------------------------ #
 #           Code           #
 # ------------------------ #
 
