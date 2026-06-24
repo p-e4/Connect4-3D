@@ -6,27 +6,25 @@ Rules for 3D Connect Four on a 5x5x5 board.
 Designed to work with GameBoard's board_state[y, x, z] convention.
 4 in a row wins in any direction.
 """
+DEFAULT_SIZE   = 5  # Board dimensions (5x5x5)
+DEFAULT_TARGET = 4  # How many in a row to win
 
 
 class Rules:
-    def __init__(self, size: int = 5, target: int = 4):
+    def __init__(self, size: int = DEFAULT_SIZE, target: int = DEFAULT_TARGET):
         self.size = size
         self.target = target
 
-    def get_valid_moves(self, board_state: np.ndarray, column_heights: np.ndarray) -> list:
-        """Returns list of (x, z) tuples where a piece can still be dropped."""
-        return [
-            (x, z)
-            for x in range(self.size)
-            for z in range(self.size)
-            if column_heights[x, z] < self.size
-        ]
-
-    def is_column_full(self, column_heights: np.ndarray, x: int, z: int) -> bool:
-        return column_heights[x, z] >= self.size
+    # ------------------------ #
+    #     Helper functions     #
+    # ------------------------ #
 
     def is_board_full(self, column_heights: np.ndarray) -> bool:
         return np.all(column_heights >= self.size)
+
+    # ------------------------ #
+    #       Checks winner      #
+    # ------------------------ #
 
     def check_winner(self, board_state: np.ndarray, player: int) -> bool:
         """Checks if the given player has 4 in a row anywhere on the board."""
@@ -76,7 +74,11 @@ class Rules:
         if self.check_winner(board_state, 2):
             return 2
         return 0
-    
+
+    # ------------------------ #
+    #        Game Status       #
+    # ------------------------ #
+
     def get_game_status(self, board_state: np.ndarray, column_heights: np.ndarray, last_player: int) -> str:
         """
         Returns:
