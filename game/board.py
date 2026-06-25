@@ -216,7 +216,10 @@ class GameBoard:
                 # 4. Cycle turn phase
                 self.turn_phase = 2 if self.turn_phase == 1 else 1
                 print(f"Turn phase cycled to: {self.turn_phase}")
-                
+
+                self.turn_number = self.turn_number + 1
+                print(f"Turn number is: {self.turn_number}")
+
                 # 5. Debug output
                 print(f"Layer {h} state:\n{self.board_state[h]}")
                 

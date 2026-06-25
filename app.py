@@ -15,22 +15,30 @@ my_ai = dumb_Agent(name="First_Available")
 rules = Rules()
 game_over = False
 
+last_turn = 0
+
 def update():
     global game_over
+    global last_turn
 
     if game_over:
         return
 
-    winner = rules.get_winner(game.board_state)
-    if winner:
-        print(f"Player {winner} wins!")
-        game_over = True
-        return
+    current_turn = game.turn_number
 
-    if rules.is_board_full(game.column_heights):
-        print("It's a draw!")
-        game_over = True
-        return
+    if current_turn > last_turn:
+        last_turn = current_turn
+
+        winner = rules.get_winner(game.board_state)
+        if winner:
+            print(f"Player {winner} wins!")
+            game_over = True
+            return
+
+        if rules.is_board_full(game.column_heights):
+            print("It's a draw!")
+            game_over = True
+            return
 
     if game.turn_phase == 2:
         move = my_ai.get_move(game.board_state)
